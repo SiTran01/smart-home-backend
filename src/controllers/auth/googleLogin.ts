@@ -1,0 +1,67 @@
+import { Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
+import User from '../../models/User.js';
+import Home from '../../models/Home.js';
+import { Types } from 'mongoose';
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const randomPassword: string = Math.random().toString(36).slice(-8);
+
+const generateToken = (id: string): string => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error('JWT_SECRET not defined');
+  return jwt.sign({ id }, secret, { expiresIn: '7d' });
+};
+
+export const googleLogin = async (req: Request, res: Response): Promise<void> => {
+  const { idToken } = req.body;
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    if (!payload) {
+      res.status(401).json({ message: 'Google token không hợp lệ' });
+      return;
+    }
+
+    const { name, email, picture } = payload;
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = await User.create({
+        name,
+        email,
+        password: randomPassword,
+        picture,
+      });
+
+      const home = new Home({
+        name: 'My Home',
+        owner: user._id,
+      });
+      await home.save();
+
+      user.homes = [home._id as Types.ObjectId];
+      await user.save();
+    }
+
+    const token = generateToken(user._id.toString());
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      picture,
+      token,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(401).json({ message: 'Google token không hợp lệ' });
+  }
+};
