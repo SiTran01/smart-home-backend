@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { UnauthorizedError } from '../utils/errors.js'; // ✅ import error rõ nghĩa
 
 // ✅ Mở rộng interface Request để thêm userId
-interface AuthRequest extends Request { 
+interface AuthRequest extends Request {
   userId?: string;
 }
 
@@ -10,8 +11,7 @@ const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction): vo
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    res.status(401).json({ message: 'No token provided' });
-    return;
+    return next(new UnauthorizedError('No token provided'));
   }
 
   const token = authHeader.split(' ')[1];
@@ -26,8 +26,8 @@ const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction): vo
     req.userId = decoded.id;
     next();
   } catch (err) {
-    console.error(err);
-    res.status(401).json({ message: 'Invalid token' });
+    console.error('JWT Verify Error:', err);
+    next(new UnauthorizedError('Invalid token'));
   }
 };
 
