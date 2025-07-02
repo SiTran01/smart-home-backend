@@ -1,9 +1,13 @@
 import { Request, Response } from 'express';
 import Home from '../../models/Home.js';
 
-const getAllHomes = async (req: Request, res: Response) => {
+interface AuthRequest extends Request {
+  userId?: string;
+}
+
+const getAllHomes = async (req: AuthRequest, res: Response) => {
   try {
-    const homes = await Home.find();
+    const homes = await Home.find({ owner: req.userId }); // ✅ lọc theo owner (userId)
     res.json(homes);
   } catch (error) {
     console.error('Error fetching homes:', error);

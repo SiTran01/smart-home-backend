@@ -1,9 +1,15 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import Home from '../../models/Home.js';
+import { AuthRequest } from '../../middlewares/authMiddleware.js'; // chỉnh path nếu cần
 
-const createHome = async (req: Request, res: Response) => {
+const createHome = async (req: AuthRequest, res: Response) => {
   try {
-    const { name, owner } = req.body;
+    const { name } = req.body;
+    const owner = req.userId;
+
+    if (!owner) {
+      return res.status(401).json({ message: 'Unauthorized: No user ID found' });
+    }
 
     const newHome = new Home({ name, owner });
     const savedHome = await newHome.save();

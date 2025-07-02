@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { UnauthorizedError } from '../utils/errors.js'; // ✅ import error rõ nghĩa
 
 // ✅ Mở rộng interface Request để thêm userId
-interface AuthRequest extends Request {
+export interface AuthRequest extends Request {
   userId?: string;
 }
 

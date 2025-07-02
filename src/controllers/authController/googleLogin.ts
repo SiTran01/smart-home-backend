@@ -3,7 +3,6 @@ import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
 import User from '../../models/User.js';
 import Home from '../../models/Home.js';
-import { Types } from 'mongoose';
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const randomPassword: string = Math.random().toString(36).slice(-8);
@@ -46,9 +45,6 @@ export const googleLogin = async (req: Request, res: Response): Promise<void> =>
         owner: user._id,
       });
       await home.save();
-
-      user.homes = [home._id as Types.ObjectId];
-      await user.save();
     }
 
     const token = generateToken(user._id.toString());

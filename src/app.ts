@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
+import homeRoutes from './routes/homeRoutes.js';
 import { HttpError } from './utils/errors.js'; // ✅ import HttpError class
 
 dotenv.config();
@@ -15,6 +16,7 @@ app.use(express.json());
 
 // ✅ Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/home', homeRoutes); // ✅ thêm line này
 
 // ✅ Connect DB
 mongoose.connect(process.env.MONGO_URI as string)

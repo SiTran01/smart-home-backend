@@ -1,10 +1,11 @@
 import express from 'express';
 import { homeController } from '../controllers/index.js';
+import authMiddleware from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
 
-router.get('/', homeController.getAllHomes);
-router.post('/', homeController.createHome);
+router.get('/gethomes', authMiddleware, homeController.getAllHomes);
+router.post('/createhomes', authMiddleware, homeController.createHome);
 router.put('/:id', homeController.updateHome);
 router.delete('/:id', homeController.deleteHome);
 

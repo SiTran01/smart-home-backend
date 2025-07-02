@@ -8,7 +8,6 @@ export interface IUser extends Document {
   password: string;
   picture?: string;
   matchPassword(enteredPassword?: string): Promise<boolean>;
-  homes: Types.ObjectId[]; // 👈 sửa lại type rõ ràng
 }
 
 const userSchema = new Schema<IUser>({
@@ -16,7 +15,6 @@ const userSchema = new Schema<IUser>({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   picture: { type: String },
-  homes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Home', default: [] }], // 👈 thêm field này
 });
 
 userSchema.pre<IUser>('save', async function (next) {
