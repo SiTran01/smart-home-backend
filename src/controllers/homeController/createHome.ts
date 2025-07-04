@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import Home from '../../models/Home.js';
-import { AuthRequest } from '../../middlewares/authMiddleware.js'; // chỉnh path nếu cần
+import { AuthRequest } from '../../middlewares/authMiddleware.js';
 
 const createHome = async (req: AuthRequest, res: Response) => {
   try {

@@ -1,9 +1,10 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
 
 export interface IHome extends Document {
-  _id: Types.ObjectId; // 👈 thêm dòng này
+  _id: Types.ObjectId;
   name: string;
   owner: mongoose.Types.ObjectId;
+  members: mongoose.Types.ObjectId[]; // ✅ thêm dòng này
   rooms: string[];
   devices: mongoose.Types.ObjectId[];
   createdAt: Date;
@@ -14,6 +15,7 @@ const HomeSchema: Schema = new Schema(
   {
     name: { type: String, required: true, default: 'My Home' },
     owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     rooms: { type: [String], default: [] },
     devices: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Device' }],
   },

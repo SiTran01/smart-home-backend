@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.get('/gethomes', authMiddleware, homeController.getAllHomes);
 router.post('/createhomes', authMiddleware, homeController.createHome);
-router.put('/:id', homeController.updateHome);
-router.delete('/:id', homeController.deleteHome);
+router.put('/:id', authMiddleware, homeController.updateHome);
+router.delete('/:id', authMiddleware, homeController.deleteHome);
 
 export default router;
