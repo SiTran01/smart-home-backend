@@ -1,39 +1,40 @@
 import express, { Request, Response, NextFunction } from 'express';
-import mongoose from 'mongoose';
 import cors from 'cors';
-import dotenv from 'dotenv';
-import authRoutes from './routes/authRoutes.js';
-import homeRoutes from './routes/homeRoutes.js';
-import roomRoutes from './routes/roomRoutes.js'; // ✅ import roomRoutes
-import { HttpError } from './utils/errors.js'; // ✅ import HttpError class
-
-dotenv.config();
+import { connectDB } from './providers/dbProvider.js';
+import authRoutes from './routes/authRoute.js';
+import homeRoutes from './routes/homeRoute.js';
+import roomRoutes from './routes/roomRoute.js';
+import deviceRoutes from './routes/deviceRoute.js';
+import { databaseConfig } from './config/databaseConfig.js';
+import errorHandler from './middlewares/errorHandler.js';
+import { NotFoundError } from './utils/errors.js';
 
 const app = express();
+
+// ✅ Connect DB
+connectDB(databaseConfig.uri);
 
 // ✅ Middleware
 app.use(cors());
 app.use(express.json());
 
+// ✅ Health Check route
+app.get('/api/health', (req: Request, res: Response) => {
+  res.json({ status: 'OK', message: 'Server is running' });
+});
+
 // ✅ Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/home', homeRoutes); // ✅ thêm line này
-app.use('/api/room', roomRoutes); // ✅ thêm line này
+app.use('/api/home', homeRoutes);
+app.use('/api/room', roomRoutes);
+app.use('/api/device', deviceRoutes);
 
-// ✅ Connect DB
-mongoose.connect(process.env.MONGO_URI as string)
-  .then(() => console.log('MongoDB connected'))
-  .catch((err) => console.log('MongoDB error:', err));
-
-// ✅ Error handler middleware (luôn đặt CUỐI cùng)
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-  console.error('Global Error Handler:', err);
-
-  if (err instanceof HttpError) {
-    res.status(err.statusCode).json({ message: err.message });
-  } else {
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
+// ✅ 404 handler (nếu không khớp route nào)
+app.use((req: Request, res: Response, next: NextFunction) => {
+  next(new NotFoundError(`Route ${req.originalUrl} not found`));
 });
+
+// ✅ Global Error handler middleware (luôn đặt CUỐI cùng)
+app.use(errorHandler);
 
 export default app;
