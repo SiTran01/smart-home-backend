@@ -4,7 +4,10 @@ export interface IHome extends Document {
   _id: Types.ObjectId;
   name: string;
   owner: mongoose.Types.ObjectId;
-  members: mongoose.Types.ObjectId[]; // ✅ thêm dòng này
+  members: {
+    user: mongoose.Types.ObjectId;
+    role: 'admin' | 'member';
+  }[];
   rooms: string[];
   devices: mongoose.Types.ObjectId[];
   createdAt: Date;
@@ -15,7 +18,12 @@ const HomeSchema: Schema = new Schema(
   {
     name: { type: String, required: true, default: 'My Home' },
     owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    members: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    members: [
+      {
+        user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        role: { type: String, enum: ['admin', 'member'], default: 'member' },
+      },
+    ],
     rooms: { type: [String], default: [] },
     devices: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Device' }],
   },

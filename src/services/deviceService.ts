@@ -1,9 +1,14 @@
 import Device from '../models/Device.js';
 import Home from '../models/Home.js';
 import Room from '../models/Room.js';
+import { ensureHomeAdminOrOwner } from '../policies/homePolicy.js';
+import { ensureDeviceAdminOrOwner } from '../policies/devicePolicy.js';
 import { NotFoundError } from '../utils/errors.js';
 
-export const createDeviceService = async (data: {
+/**
+ * ➕ Tạo device mới, owner hoặc admin được phép
+ */
+export const createDeviceService = async (userId: string, data: {
   name: string;
   type: string;
   homeId: string;
@@ -12,8 +17,8 @@ export const createDeviceService = async (data: {
 }) => {
   const { name, type, homeId, roomId, status } = data;
 
-  const home = await Home.findById(homeId);
-  if (!home) throw new NotFoundError('Home not found');
+  // ✅ Check quyền owner hoặc admin
+  const home = await ensureHomeAdminOrOwner(userId, homeId);
 
   let room = null;
   if (roomId) {
@@ -31,19 +36,28 @@ export const createDeviceService = async (data: {
 
   const savedDevice = await newDevice.save();
 
+  // ✅ Update home.devices
   home.devices.push(savedDevice._id);
   await home.save();
 
   return savedDevice;
 };
 
-export const getAllDevicesService = async (homeId: string) => {
+/**
+ * 📄 Lấy toàn bộ device của home
+ */
+export const getAllDevicesService = async (userId: string, homeId: string) => {
+  // ✅ Check quyền xem device trong home
+  await ensureHomeAdminOrOwner(userId, homeId);
   return await Device.find({ home: homeId });
 };
 
-export const updateDeviceService = async (deviceId: string, data: any) => {
-  const device = await Device.findById(deviceId);
-  if (!device) throw new NotFoundError('Device not found');
+/**
+ * ✏️ Update device, owner hoặc admin được phép
+ */
+export const updateDeviceService = async (userId: string, deviceId: string, data: any) => {
+  // ✅ Check quyền và load device + home
+  const { device } = await ensureDeviceAdminOrOwner(userId, deviceId);
 
   const { name, type, status, room } = data;
 
@@ -55,12 +69,17 @@ export const updateDeviceService = async (deviceId: string, data: any) => {
   return await device.save();
 };
 
-export const deleteDeviceService = async (deviceId: string) => {
-  const device = await Device.findById(deviceId);
-  if (!device) throw new NotFoundError('Device not found');
+/**
+ * 🗑️ Delete device, owner hoặc admin được phép
+ */
+export const deleteDeviceService = async (userId: string, deviceId: string) => {
+  // ✅ Check quyền và load device + home
+  const { device, home } = await ensureDeviceAdminOrOwner(userId, deviceId);
 
   await device.deleteOne();
-  await Home.findByIdAndUpdate(device.home, { $pull: { devices: device._id } });
+
+  // ✅ Update home.devices
+  await Home.findByIdAndUpdate(home._id, { $pull: { devices: device._id } });
 
   return { message: 'Device deleted successfully' };
 };

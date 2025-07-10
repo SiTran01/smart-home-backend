@@ -1,23 +1,50 @@
 import Home from '../models/Home.js';
-import { NotFoundError } from '../utils/errors.js';
+import { ensureHomeOwner } from '../policies/homePolicy.js';
 
+/**
+ * ➕ Tạo home mới, owner riêng, members rỗng
+ */
 export const createHomeService = async (name: string, owner: string) => {
-  const newHome = new Home({ name, owner });
+  const newHome = new Home({
+    name,
+    owner, // 👑 chỉ định owner
+    members: [], // ❌ không thêm owner vào members
+  });
+
   return await newHome.save();
 };
 
-export const deleteHomeService = async (id: string) => {
-  const deletedHome = await Home.findByIdAndDelete(id);
-  if (!deletedHome) throw new NotFoundError('Home not found');
-  return deletedHome;
+/**
+ * 🗑️ Xóa home, chỉ owner mới được xóa
+ */
+export const deleteHomeService = async (userId: string, homeId: string) => {
+  // ✅ Check quyền owner qua policy
+  const home = await ensureHomeOwner(userId, homeId);
+
+  await home.deleteOne();
+  return { message: 'Home deleted successfully' };
 };
 
-export const getAllHomesService = async (owner: string) => {
-  return await Home.find({ owner });
+/**
+ * 📄 Lấy toàn bộ home của user (owner hoặc member)
+ */
+export const getAllHomesService = async (userId: string) => {
+  return await Home.find({
+    $or: [
+      { owner: userId },
+      { 'members.user': userId },
+    ],
+  });
 };
 
-export const updateHomeService = async (id: string, name: string) => {
-  const updatedHome = await Home.findByIdAndUpdate(id, { name }, { new: true });
-  if (!updatedHome) throw new NotFoundError('Home not found');
-  return updatedHome;
+/**
+ * ✏️ Update home, chỉ owner mới được update
+ */
+export const updateHomeService = async (userId: string, homeId: string, name: string) => {
+  // ✅ Check quyền owner qua policy
+  const home = await ensureHomeOwner(userId, homeId);
+
+  home.name = name;
+  await home.save();
+  return home;
 };

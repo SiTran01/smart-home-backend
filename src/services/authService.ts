@@ -38,7 +38,11 @@ export const googleLoginService = async (payload: any) => {
       picture,
     });
 
-    const home = new Home({ name: 'My Home', owner: user._id });
+    const home = new Home({
+      name: 'My Home',
+      owner: user._id,
+      members: [],
+    });
     await home.save();
 
     const room = new Room({ name: 'New Room', home: home._id });
@@ -50,3 +54,4 @@ export const googleLoginService = async (payload: any) => {
 
   return user;
 };
+

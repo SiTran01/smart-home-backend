@@ -11,13 +11,14 @@ import { BadRequestError, UnauthorizedError } from '../utils/errors.js';
 export const createRoom = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { name, homeId } = req.body;
-    const owner = req.userId;
+    const userId = req.userId;
 
-    if (!owner) throw new UnauthorizedError('No user ID found');
+    if (!userId) throw new UnauthorizedError('No user ID found');
     if (!homeId) throw new BadRequestError('Missing homeId in request body');
     if (!name) throw new BadRequestError('Room name is required');
 
-    const savedRoom = await createRoomService(name, homeId);
+    // ✅ truyền userId vào service
+    const savedRoom = await createRoomService(userId, name, homeId);
     res.status(201).json(savedRoom);
   } catch (err) {
     next(err);
@@ -27,9 +28,13 @@ export const createRoom = async (req: AuthRequest, res: Response, next: NextFunc
 export const deleteRoom = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { roomId } = req.params;
+    const userId = req.userId;
+
+    if (!userId) throw new UnauthorizedError('No user ID found');
     if (!roomId) throw new BadRequestError('Missing roomId in request params');
 
-    await deleteRoomService(roomId);
+    // ✅ truyền userId vào service
+    await deleteRoomService(userId, roomId);
     res.json({ message: 'Room deleted successfully' });
   } catch (err) {
     next(err);
@@ -50,12 +55,14 @@ export const getAllRooms = async (req: AuthRequest, res: Response, next: NextFun
 
 export const updateRoom = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
+    const userId = req.userId;
     const { roomId } = req.params;
     const { name, type, location } = req.body;
 
+    if (!userId) throw new UnauthorizedError('Unauthorized');
     if (!roomId) throw new BadRequestError('Missing roomId in request params');
 
-    const updatedRoom = await updateRoomService(roomId, { name, type, location });
+    const updatedRoom = await updateRoomService(userId, roomId, { name, type, location });
     res.json(updatedRoom);
   } catch (err) {
     next(err);

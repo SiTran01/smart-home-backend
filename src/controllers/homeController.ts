@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { AuthRequest } from '../middlewares/authMiddleware.js';
 import {
   createHomeService,
@@ -6,8 +6,11 @@ import {
   getAllHomesService,
   updateHomeService,
 } from '../services/homeService.js';
-import { BadRequestError, NotFoundError, UnauthorizedError } from '../utils/errors.js';
+import { BadRequestError, UnauthorizedError } from '../utils/errors.js';
 
+/**
+ * ➕ Tạo home mới
+ */
 export const createHome = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { name } = req.body;
@@ -23,40 +26,53 @@ export const createHome = async (req: AuthRequest, res: Response, next: NextFunc
   }
 };
 
-export const deleteHome = async (req: Request, res: Response, next: NextFunction) => {
+/**
+ * 🗑️ Xóa home (chỉ admin)
+ */
+export const deleteHome = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const deletedHome = await deleteHomeService(id);
+    const userId = req.userId;
 
-    if (!deletedHome) throw new NotFoundError('Home not found');
+    if (!userId) throw new UnauthorizedError('Unauthorized');
+    if (!id) throw new BadRequestError('Missing home id');
 
-    res.json({ message: 'Home deleted successfully' });
+    const result = await deleteHomeService(userId, id);
+    res.json(result);
   } catch (err) {
     next(err);
   }
 };
 
+/**
+ * 📄 Lấy tất cả home mà user sở hữu
+ */
 export const getAllHomes = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    if (!req.userId) throw new UnauthorizedError('Unauthorized');
+    const userId = req.userId;
+    if (!userId) throw new UnauthorizedError('Unauthorized');
 
-    const homes = await getAllHomesService(req.userId);
+    const homes = await getAllHomesService(userId);
     res.json(homes);
   } catch (err) {
     next(err);
   }
 };
 
-export const updateHome = async (req: Request, res: Response, next: NextFunction) => {
+/**
+ * ✏️ Update home (chỉ admin)
+ */
+export const updateHome = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
     const { name } = req.body;
+    const userId = req.userId;
 
+    if (!userId) throw new UnauthorizedError('Unauthorized');
+    if (!id) throw new BadRequestError('Missing home id');
     if (!name) throw new BadRequestError('Home name is required');
 
-    const updatedHome = await updateHomeService(id, name);
-    if (!updatedHome) throw new NotFoundError('Home not found');
-
+    const updatedHome = await updateHomeService(userId, id, name);
     res.json(updatedHome);
   } catch (err) {
     next(err);

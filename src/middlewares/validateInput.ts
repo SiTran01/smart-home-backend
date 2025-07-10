@@ -5,6 +5,7 @@ import { ValidationError } from '../utils/errors.js';
 export const validateInput = (schema: ZodSchema) =>
   (req: Request, res: Response, next: NextFunction) => {
     try {
+    //   console.log('🔥 validateInput - req.body:', req.body);
       schema.parse(req.body);
       next();
     } catch (err: any) {
